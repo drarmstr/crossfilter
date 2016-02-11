@@ -6,7 +6,8 @@ function crossfilter() {
     remove: removeData,
     dimension: dimension,
     groupAll: groupAll,
-    size: size
+    size: size,
+    isElementFiltered: isElementFiltered,
   };
 
   var data = [], // the records
@@ -62,6 +63,15 @@ function crossfilter() {
     while (n > j) filters[--n] = 0;
   }
 
+  // Returns true if the element at the provided index is filtered in.
+  // Optionally ignore the filters for any dimensions included in the dimensions list
+  function isElementFiltered(i, ignore_dimensions) {
+      var mask;
+      if(ignore_dimensions==null) ignore_dimensions = [];
+      mask = ignore_dimensions.reduce(function(p,v) { return p & v._zero; }, ~0);
+      return !(filters[i] & mask);
+  }
+    
   // Adds a new dimension with the specified value accessor function.
   function dimension(value) {
     var dimension = {
@@ -92,6 +102,10 @@ function crossfilter() {
         lo0 = 0,
         hi0 = 0;
 
+    // Expose dimension mask
+    dimension._one = one;
+    dimension._zero = zero;
+    
     // Updating a dimension is a two-stage process. First, we must update the
     // associated filters for the newly-added records. Once all dimensions have
     // updated their filters, the groups are notified to update.
